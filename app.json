@@ -1,5 +1,6 @@
 {
   "expo": {
+    "scheme": "scriptureisualizer",
     "name": "Scripture_Visualizer",
     "slug": "Scripture_Visualizer",
     "version": "1.0.0",
@@ -20,10 +21,14 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.anonymous.Scripture_Visualizer"
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      "expo-router"
+    ]
   }
 }
