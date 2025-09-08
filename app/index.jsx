@@ -1,19 +1,25 @@
-import { StyleSheet, Text, View, Image } from 'react-native'
-import React from 'react'
+import { StyleSheet, Text, View, Image, Pressable, TextInput } from 'react-native'
+import { Link } from 'expo-router'
 
 const Home = () => {
     return (
         <View style={styles.container}>
-            <Image source={require("../assets/favicon.png")}></Image>
+            <Image style={styles.img} source={require("../assets/favicon.png")}></Image>
             <Text style={styles.title}>The Number 1</Text>
             <Text style={{ marginTop: 10, marginBottom: 30 }}>Reading List App</Text>
             <View style={styles.card}>
                 <Text>Hello, This is a Card</Text>
             </View>
+            <Link href="/about" style={styles.link}>About</Link>
+            <Link href="/contact" style={styles.link}>Contact</Link>
+            <Pressable backgroundColor={"#333"}>
+                <Text>PRESS ME</Text>
+            </Pressable>
+            <TextInput placeholder='Enter Verse' style={backgroundColor = "#ddd"}></TextInput>
         </View>
     )
 }
-
+// expo router generates /about by itself because it can see the about.jsx
 export default Home
 
 const styles = StyleSheet.create({
@@ -33,5 +39,14 @@ const styles = StyleSheet.create({
         padding: 20,
         borderRadius: 5,
         boxShadow: "4px 4px rgba(0,0,0,0.1)"
+    },
+
+    img: {
+        marginVertical: 20
+    },
+
+    link: {
+        margin: 10,
+        borderBottomWidth: 1
     }
 })
