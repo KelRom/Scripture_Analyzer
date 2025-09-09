@@ -5,7 +5,7 @@ import * as Sharing from 'expo-sharing';
 import * as FileSystem from 'expo-file-system';
 
 // ====================== CONFIG ======================
-const OPENAI_API_KEY = 'INPUT KEY'; // demo only (use a proxy in real apps)
+const OPENAI_API_KEY = 'TYPE HERE'; // demo only (use a proxy in real apps)
 
 // Optional small verse text map for demo preview (use full text if you have it)
 const DEMO_VERSES = {
@@ -24,7 +24,6 @@ const BOOK_MAP = {
 
 function normalizeReference(input) {
     if (!input) return '';
-    const trimmed = input.tarim().replace(/\s+/g, ' ');
     const trimmed = input.tarim().replace(/\s+/g, ' ');
     const m = trimmed.match(/^([1-3]?\s?[A-Za-z]+)\s+(\d+):(\d+)$/);
     if (!m) return trimmed; // fallback: pass through
