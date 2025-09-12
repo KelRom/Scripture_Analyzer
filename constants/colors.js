@@ -4,11 +4,19 @@ export const Colors = {
         flex: 1
     },
 
-    primaryColor: {
+    primaryColorBackground: {
+        backgroundColor: "#EFBF04"
+    },
+
+    primaryColorText: {
         color: "#EFBF04"
     },
 
-    secondaryColor: {
+    secondaryColorBackground: {
+        backgroudColor: "#0434EF"
+    },
+
+    secondaryColorText: {
         color: "#0434EF"
     }
 }
