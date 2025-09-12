@@ -21,7 +21,6 @@ const styles = StyleSheet.create(
     {
         inputFormat: {
             top: Platform.OS === "android" ? StatusBar.currentHeight + 76 : 76, // Safe area view is only for IOS so this is checking is os is android, get height and 30 for correct location. else just place it 30 from the top
-            left: 30,
             borderRadius: 50,
             borderWidth: 1,
             width: 350,
@@ -31,7 +30,6 @@ const styles = StyleSheet.create(
         },
 
         button: {
-            left: 75,
             top: Platform.OS === "android" ? StatusBar.currentHeight + 544 : 544,
             width: 244,
             height: 116,

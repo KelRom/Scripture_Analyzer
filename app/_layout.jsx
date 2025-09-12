@@ -1,12 +1,18 @@
 import { Slot } from 'expo-router'
-import { StyleSheet, Text, View } from 'react-native'
+import { StyleSheet, Text, SafeAreaView } from 'react-native'
 import { Colors } from "../constants/colors"
 const RootLayout = () => {
     return (
-        <View style={Colors.container}>
+        <SafeAreaView style={[Colors.container, styles.container]}>
             <Slot></Slot>
-        </View>
+        </SafeAreaView>
     )
 }
 
 export default RootLayout
+
+const styles = StyleSheet.create({
+    container: {
+        alignItems: 'center'
+    }
+})
