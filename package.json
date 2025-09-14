@@ -9,6 +9,7 @@
     "web": "expo start --web"
   },
   "dependencies": {
+    "@react-navigation/drawer": "^7.5.8",
     "expo": "^53.0.22",
     "expo-constants": "~17.1.7",
     "expo-file-system": "~18.1.11",
@@ -22,6 +23,8 @@
     "openai": "^5.20.2",
     "react": "19.0.0",
     "react-native": "0.79.5",
+    "react-native-gesture-handler": "~2.24.0",
+    "react-native-reanimated": "~3.17.4",
     "react-native-safe-area-context": "5.4.0",
     "react-native-screens": "~4.11.1"
   },

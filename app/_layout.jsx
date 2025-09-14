@@ -1,5 +1,5 @@
 import { Stack } from 'expo-router';
-import { StyleSheet, SafeAreaView } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { Colors } from '../constants/colors';
 
 const RootLayout = () => {

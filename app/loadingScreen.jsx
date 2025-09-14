@@ -1,4 +1,4 @@
-import { SafeAreaView, StyleSheet, Platform, StatusBar } from 'react-native'
+import { SafeAreaView, StyleSheet } from 'react-native'
 import { Image } from "expo-image"
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useEffect } from 'react'

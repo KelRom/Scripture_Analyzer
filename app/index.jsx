@@ -1,25 +1,36 @@
 import { StyleSheet, TextInput, TouchableOpacity, Text, View } from 'react-native'
 import { useRouter } from "expo-router"
 import { Colors } from "../constants/colors"
+import { useState } from 'react'
+
 
 const Home = () => {
     const router = useRouter()
-
+    const [userInput, setUserInput] = useState("")
+    function onGenerate() {
+        if (!userInput.trim()) return
+        router.navigate({
+            pathname: "/promptViewer",
+            params: { verseToGenerate: userInput }
+        })
+    }
     return (
         <View style={styles.screen}>
             <TextInput
-                style={[styles.inputFormat, Colors.primaryColorBackground, Colors.secondaryColorText]}
+                value={userInput}
+                onChangeText={setUserInput}
+                style={styles.inputFormat}
                 placeholder="John 3:16"
                 placeholderTextColor="#0434EF"
             />
 
             <TouchableOpacity
-                style={[Colors.primaryColorBackground, styles.button]}
-                onPress={() => router.navigate("/promptViewer")}
+                style={styles.button}
+                onPress={onGenerate}
             >
-                <Text style={[Colors.secondaryColorText, styles.buttonText]}>{"Generate \n   Image"}</Text>
+                <Text style={styles.buttonText}>{"Generate \n   Image"}</Text>
             </TouchableOpacity>
-        </View>
+        </View >
     )
 }
 
@@ -37,7 +48,9 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         width: 350,
         height: 58,
-        fontSize: 20
+        fontSize: 20,
+        backgroundColor: Colors.primaryColorBackground.backgroundColor,
+        color: Colors.secondaryColorText.color
     },
     button: {
         marginBottom: 100,
@@ -46,8 +59,10 @@ const styles = StyleSheet.create({
         borderRadius: 50,
         justifyContent: "center",
         alignItems: "center",
+        backgroundColor: Colors.primaryColorBackground.backgroundColor
     },
     buttonText: {
-        fontSize: 20
+        fontSize: 20,
+        color: Colors.secondaryColorText.color
     }
 })

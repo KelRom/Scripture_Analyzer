@@ -1,14 +1,16 @@
 import { StyleSheet, Text, View, TouchableOpacity } from 'react-native'
-import { useRouter } from "expo-router"
+import { useLocalSearchParams, useRouter } from "expo-router"
 import { Colors } from "../constants/colors"
 
 const promptViewer = () => {
+    const router = useRouter()
+    const { verseToGenerate = "" } = useLocalSearchParams()
     return (
         <View style={styles.screen}>
-            <Text style={[Colors.primaryColorText, styles.title]}>Preview</Text>
-
-            <TouchableOpacity style={[Colors.primaryColorBackground, styles.button]} onPress={() => useRouter().navigate("/loadingScreen")}>
-                <Text style={[Colors.secondaryColorText, styles.buttonText]}>{"Generate \n   Image"}</Text>
+            <Text style={styles.title}>Preview</Text>
+            <Text style={styles.promptpreview}></Text>
+            <TouchableOpacity style={[Colors.primaryColorBackground, styles.button]} onPress={() => router.navigate("/loadingScreen")}>
+                <Text style={styles.buttonText}>{"Generate \n   Image"}</Text>
             </TouchableOpacity>
 
         </View>
@@ -28,6 +30,16 @@ const styles = StyleSheet.create(
 
         title: {
             fontSize: 50,
+            color: Colors.primaryColorText.color
+        },
+
+        promptpreview:
+        {
+            backgroundColor: "#D9D9D9",
+            opacity: 23,
+            width: 309,
+            height: 204,
+            borderRadius: 30
         },
 
         button: {
@@ -36,11 +48,13 @@ const styles = StyleSheet.create(
             height: 116,
             borderRadius: 50,
             justifyContent: "center",
-            alignItems: "center"
+            alignItems: "center",
+            backgroundColor: Colors.primaryColorBackground.backgroundColor
         },
 
         buttonText: {
             fontSize: 20,
+            color: Colors.secondaryColorText.color
         }
     })
 

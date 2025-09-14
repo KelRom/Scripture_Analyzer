@@ -1,6 +1,7 @@
 // app/results.jsx
 import { View, Text, Image, TouchableOpacity, StyleSheet, Platform, StatusBar, SafeAreaView } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
+import { Colors } from "../constants/colors"
 
 const Results = () => {
     const router = useRouter()
@@ -10,8 +11,16 @@ const Results = () => {
         router.replace({ pathname: "/loadingScreen", params: { prompt, ref } })
     }
 
+    function onSave() {
+
+    }
+
+    function onShare() {
+
+    }
+
     return (
-        <SafeAreaView>
+        <View style={styles.screen}>
             <Text style={styles.title}>Result</Text>
 
             <View style={styles.center}>
@@ -20,26 +29,61 @@ const Results = () => {
             </View>
 
             <View style={styles.row}>
-                <TouchableOpacity style={styles.btnOutline} onPress={onRegenerate}>
-                    <Text>Regenerate</Text>
+                <TouchableOpacity style={styles.button} onPress={onRegenerate}>
+                    <Text style={{ color: Colors.secondaryColorText.color }}>Regenerate</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.button} onPress={onSave}>
+                    <Text style={{ color: Colors.secondaryColorText.color }}>Save</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.button} onPress={onShare}>
+                    <Text style={{ color: Colors.secondaryColorText.color }}>Share</Text>
                 </TouchableOpacity>
             </View>
-        </SafeAreaView>
+        </View>
     )
 }
 export default Results
 
 const styles = StyleSheet.create({
-    title: { top: Platform.OS === "android" ? StatusBar.currentHeight + 36 : 36, fontSize: 32, fontWeight: '700' },
+    screen: {
+        flex: 1,
+        justifyContent: 'space-evenly',
+        alignItems: 'center',
+    },
+
+    title: {
+        fontSize: 50,
+        color: Colors.primaryColorText.color
+    },
+
     center: {
-        top: Platform.OS === "android" ? StatusBar.currentHeight + 56 : 56,
         alignItems: 'center'
     },
-    image: { width: 320, height: 320, borderRadius: 8, backgroundColor: '#eee' },
-    verse: { marginTop: 10, textAlign: 'center' },
-    row: {
-        top: Platform.OS === "android" ? StatusBar.currentHeight + 84 : 84,
-        flexDirection: 'row', justifyContent: 'center', gap: 16
+
+    image: {
+        width: 320,
+        height: 320, borderRadius: 50,
+        backgroundColor: '#eee'
     },
-    btnOutline: { padding: 12, borderWidth: 1, borderRadius: 8 }
+
+    verse: {
+        marginTop: 10,
+        textAlign: 'center'
+    },
+
+    row: {
+        flexDirection: 'row',
+        justifyContent: "space-evenly",
+        width: '100%'
+    },
+
+    button: {
+        marginBottom: 100,
+        width: 100,
+        height: 50,
+        borderRadius: 50,
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: Colors.primaryColorBackground.backgroundColor
+    },
 })
