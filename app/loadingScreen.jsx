@@ -1,20 +1,39 @@
 import { SafeAreaView, StyleSheet, Platform, StatusBar } from 'react-native'
 import { Image } from "expo-image"
+import { useLocalSearchParams, useRouter } from 'expo-router'
+import { useEffect } from 'react'
 
+// mock image helper (until OpenAI is wired)
+const MOCK = "https://placehold.co/1024x1024/png?text=Verse+Art"
 
-const loadingScreen = () => {
+const LoadingScreen = () => {
+    const router = useRouter()
+    const { prompt = "", ref = "" } = useLocalSearchParams()
+
+    useEffect(() => {
+        // simulate generation time, then navigate to results with a mock image URL
+        const t = setTimeout(() => {
+            router.replace({ pathname: "/results", params: { img: MOCK, ref, prompt } })
+        }, 2200)
+        return () => clearTimeout(t)
+    }, [router, ref, prompt])
+
     return (
-        <SafeAreaView style={{ justifyContent: 'center' }}>
+        <SafeAreaView style={styles.screen}>
             <Image style={styles.image} source={require("../assets/bible_flipping.gif")} />
         </SafeAreaView>
     )
 }
-
-export default loadingScreen
+export default LoadingScreen
 
 const styles = StyleSheet.create({
+    screen: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+
     image: {
-        top: Platform.OS === "android" ? StatusBar.currentHeight + 201 : 201, // Safe area view is only for IOS so this is checking is os is android, get height and 30 for correct location. else just place it 30 from the top
         width: 256,
         height: 256,
     }
