@@ -3,8 +3,7 @@ import { Image } from "expo-image"
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useEffect } from 'react'
 
-// TODO: set this to your deployed vercel URL
-const API_URL = "https://scripture-analyzer-8y11u4z5x-kelvin-roman-s-projects.vercel.app/api/generate-image"
+const API_URL = "https://scripture-analyzer.vercel.app/api/generate-image"
 
 const LoadingScreen = () => {
     const router = useRouter()

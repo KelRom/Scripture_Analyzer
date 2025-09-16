@@ -5,7 +5,7 @@ import { Colors } from "../constants/colors"
 const promptViewer = () => {
     const router = useRouter()
     const { verseToGenerate = "" } = useLocalSearchParams()
-    const prompt = `Create a 256x256, detailed, reverent illustration inspired by the Bible verse "${verseToGenerate}". Focus on uplifting imagery, natural lighting, soft textures, and clear subject silhouettes. Avoid text. Make it easy to understand visually 
+    const prompt = `Create a 1024x1024, detailed, reverent illustration inspired by the Bible verse "${verseToGenerate}". Focus on uplifting imagery, natural lighting, soft textures, and clear subject silhouettes. Avoid text. Make it easy to understand visually 
     and focus on using a historical style if no style is selected.`;
 
     function onGenerate() {
