@@ -5,22 +5,27 @@ import { Colors } from "../constants/colors"
 const promptViewer = () => {
     const router = useRouter()
     const { verseToGenerate = "" } = useLocalSearchParams()
+    const prompt = `Create a 256x256, detailed, reverent illustration inspired by the Bible verse "${verseToGenerate}". Focus on uplifting imagery, natural lighting, soft textures, and clear subject silhouettes. Avoid text. Make it easy to understand visually 
+    and focus on using a historical style if no style is selected.`;
 
     function onGenerate() {
         router.navigate({
             pathname: "/loadingScreen",
-            params: { verseToGenerate: userInput }
+            params: { prompt, ref: verseToGenerate }
         })
     }
 
     return (
         <View style={styles.screen}>
             <Text style={styles.title}>Preview</Text>
-            <Text style={styles.promptpreview}></Text>
-            <TouchableOpacity style={[Colors.primaryColorBackground, styles.button]} onPress={onGenerate}>
+
+            <View style={styles.promptpreview}>
+                <Text>{verseToGenerate || "No verse provided"}</Text>
+            </View>
+
+            <TouchableOpacity style={[styles.button]} onPress={onGenerate}>
                 <Text style={styles.buttonText}>{"Generate \n   Image"}</Text>
             </TouchableOpacity>
-
         </View>
     )
 }
@@ -44,7 +49,7 @@ const styles = StyleSheet.create(
         promptpreview:
         {
             backgroundColor: "#D9D9D9",
-            opacity: 23,
+            opacity: .23,
             width: 309,
             height: 204,
             borderRadius: 30
