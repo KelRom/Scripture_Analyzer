@@ -8,7 +8,7 @@ const MOCK = "https://placehold.co/1024x1024/png?text=Verse+Art"
 
 const LoadingScreen = () => {
     const router = useRouter()
-    const { prompt = "", ref = "" } = useLocalSearchParams()
+    const { verseToGenerate = "" } = useLocalSearchParams()
 
     useEffect(() => {
         // simulate generation time, then navigate to results with a mock image URL

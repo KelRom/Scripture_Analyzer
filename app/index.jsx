@@ -7,6 +7,7 @@ import { useState } from 'react'
 const Home = () => {
     const router = useRouter()
     const [userInput, setUserInput] = useState("")
+
     function onGenerate() {
         if (!userInput.trim()) return
         router.navigate({

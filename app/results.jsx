@@ -2,6 +2,7 @@
 import { View, Text, Image, TouchableOpacity, StyleSheet, Platform, StatusBar, SafeAreaView } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { Colors } from "../constants/colors"
+import * as Sharing from "expo-sharing"
 
 const Results = () => {
     const router = useRouter()

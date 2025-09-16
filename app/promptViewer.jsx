@@ -5,11 +5,19 @@ import { Colors } from "../constants/colors"
 const promptViewer = () => {
     const router = useRouter()
     const { verseToGenerate = "" } = useLocalSearchParams()
+
+    function onGenerate() {
+        router.navigate({
+            pathname: "/loadingScreen",
+            params: { verseToGenerate: userInput }
+        })
+    }
+
     return (
         <View style={styles.screen}>
             <Text style={styles.title}>Preview</Text>
             <Text style={styles.promptpreview}></Text>
-            <TouchableOpacity style={[Colors.primaryColorBackground, styles.button]} onPress={() => router.navigate("/loadingScreen")}>
+            <TouchableOpacity style={[Colors.primaryColorBackground, styles.button]} onPress={onGenerate}>
                 <Text style={styles.buttonText}>{"Generate \n   Image"}</Text>
             </TouchableOpacity>
 
