@@ -29,7 +29,15 @@ const LoadingScreen = () => {
                 const uri = `data:${data.mime || "image/png"};base64,${data.image_b64}`
 
                 if (!cancelled) {
-                    router.replace({ pathname: "/results", params: { img: uri, ref: data.ref || ref, prompt: data.prompt || prompt } })
+                    const imgParam = encodeURIComponent(String(uri));
+                    router.replace({
+                        pathname: "/results",
+                        params: {
+                            img: imgParam,
+                            ref: String(data.ref || ref || ""),
+                            prompt: String(data.prompt || prompt || "")
+                        }
+                    })
                 }
             } catch (e) {
                 console.error(e)

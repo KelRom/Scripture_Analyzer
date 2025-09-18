@@ -16,7 +16,15 @@ const Results = () => {
     const [busy, setBusy] = useState(false)
 
     function onRegenerate() {
-        router.replace({ pathname: "/loadingScreen", params: { prompt, ref } })
+        const imgParam = encodeURIComponent(String(uri));
+        router.replace({
+            pathname: "/results",
+            params: {
+                img: imgParam,
+                ref: String(data.ref || ref || ""),
+                prompt: String(data.prompt || prompt || "")
+            }
+        })
     }
 
     async function ensureLocalFileFromImg(imgStr) {
