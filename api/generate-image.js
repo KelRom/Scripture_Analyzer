@@ -1,4 +1,4 @@
-const OpenAI = require("openai");
+const OpenAI = require({ apiKey: process.env.OPENAI_API_KEY });
 
 module.exports = async (req, res) => {
     if (req.method === "OPTIONS") {
