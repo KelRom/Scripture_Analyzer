@@ -46,7 +46,7 @@ export default function HistoryScreen() {
 }
 
 const styles = StyleSheet.create({
-    screen: { flex: 1, padding: 16 },
+    screen: { flex: 1, marginTop: 16 },
     title: { fontSize: 22, textAlign: 'center', color: Colors.primaryColorText.color, marginBottom: 12 },
     grid: { gap: 12 },
     card: { flex: 1, aspectRatio: 1, borderRadius: 16, overflow: 'hidden', margin: 6, borderWidth: 1, borderColor: '#777' },
