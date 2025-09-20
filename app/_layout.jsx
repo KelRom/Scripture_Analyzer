@@ -34,6 +34,11 @@ export default function RootLayout() {
                         color: Colors.primaryColorText.color,
                         fontSize: 16,
                     },
+                    // makes the swipe much easier to trigger
+                    swipeEnabled: true,
+                    swipeEdgeWidth: 120,   // default is small
+                    swipeMinDistance: 10,  // start recognizing sooner
+                    drawerType: 'front',   // best “feel” for edge pull
                 }}
             >
                 {/* Drawer items */}
