@@ -4,7 +4,6 @@ import { View, Text, Image, TouchableOpacity, StyleSheet, Alert, Platform } from
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { Colors } from '../constants/colors'
 
-// ✅ SDK 54 new FileSystem API
 import { File, Directory, Paths } from 'expo-file-system'
 import * as MediaLibrary from 'expo-media-library'
 import * as Sharing from 'expo-sharing'
@@ -14,6 +13,34 @@ import Constants from 'expo-constants'
 const HISTORY_KEY = 'sa_history'
 const ALBUM_NAME = 'Scripture Analyzer'
 const isExpoGo = Constants.appOwnership === 'expo'
+
+// ---- tiny base64 decoder -> Uint8Array (no atob/Buffer needed) ----
+const _b64chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+function base64ToBytes(b64) {
+    // strip data URL prefix if present
+    const clean = b64.replace(/^data:.*?;base64,/, '').replace(/[\r\n\s]/g, '')
+    let bufferLength = clean.length * 0.75
+    if (clean.endsWith('==')) bufferLength -= 2
+    else if (clean.endsWith('=')) bufferLength -= 1
+    const bytes = new Uint8Array(bufferLength)
+
+    let p = 0
+    for (let i = 0; i < clean.length; i += 4) {
+        const enc1 = _b64chars.indexOf(clean[i])
+        const enc2 = _b64chars.indexOf(clean[i + 1])
+        const enc3 = _b64chars.indexOf(clean[i + 2])
+        const enc4 = _b64chars.indexOf(clean[i + 3])
+
+        const chr1 = (enc1 << 2) | (enc2 >> 4)
+        const chr2 = ((enc2 & 15) << 4) | (enc3 >> 2)
+        const chr3 = ((enc3 & 3) << 6) | enc4
+
+        bytes[p++] = chr1
+        if (enc3 !== 64 && clean[i + 2] !== '=') bytes[p++] = chr2
+        if (enc4 !== 64 && clean[i + 3] !== '=') bytes[p++] = chr3
+    }
+    return bytes
+}
 
 export default function Results() {
     const router = useRouter()
@@ -28,39 +55,33 @@ export default function Results() {
     const addedOnceRef = useRef(false)
 
     function onRegenerate() {
-        router.replace({
-            pathname: '/loadingScreen',
-            params: { prompt: String(prompt || ''), ref: String(ref || '') }
-        })
+        router.replace({ pathname: '/loadingScreen', params: { prompt: String(prompt || ''), ref: String(ref || '') } })
     }
 
-    // ---------- FS helpers (SDK 54) ----------
+    // ---------- File helpers (SDK 54) ----------
     const outDir = new Directory(Paths.cache, 'scripture-analyzer')
     async function ensureOutDir() {
         try {
-            await outDir.create() // may throw if exists
+            await outDir.create()
         } catch (e) {
-            // ignore "it already exists"
-            if (!String(e?.message || '').toLowerCase().includes('already exists')) {
-                throw e
-            }
+            const msg = String(e?.message || '').toLowerCase()
+            if (!msg.includes('already exists')) throw e
         }
     }
 
     async function ensureLocalFileFromImg(uriStr) {
         await ensureOutDir()
 
-        // data: URI → base64 write
         if (uriStr.startsWith('data:')) {
             const [, mime = 'image/png'] = uriStr.match(/^data:(.*?);base64,/) || []
             const ext = mime.includes('png') ? 'png' : (mime.includes('jpeg') || mime.includes('jpg')) ? 'jpg' : 'png'
             const base64 = uriStr.split(',')[1] || ''
+            const bytes = base64ToBytes(base64) // <-- write bytes, not (data, {encoding})
             const outFile = outDir.createFile(`verse-${Date.now()}.${ext}`, mime)
-            await outFile.write(base64, { encoding: 'base64' })
+            await outFile.write(bytes) // ✅ single-arg write
             return outFile.uri
         }
 
-        // http(s) → download and write bytes
         if (/^https?:\/\//i.test(uriStr)) {
             const res = await fetch(uriStr)
             if (!res.ok) throw new Error(`Download failed: ${res.status}`)
@@ -71,7 +92,6 @@ export default function Results() {
             return outFile.uri
         }
 
-        // already local
         return uriStr
     }
 
@@ -100,17 +120,14 @@ export default function Results() {
         return () => { cancelled = true }
     }, [imageUri, ref, prompt])
 
-    // ---------- MediaLibrary ----------
+    // ---------- MediaLibrary (photo-only) ----------
     async function requestPhotoPermissionOnly() {
-        // Expo Go on Android: plugin isn’t applied → granular request can cause AUDIO error.
-        if (isExpoGo && Platform.OS === 'android') {
-            return false // force the “use dev build” message below
-        }
+        if (isExpoGo && Platform.OS === 'android') return false // Expo Go can’t apply plugin permissions
         try {
-            const { status } = await MediaLibrary.requestPermissionsAsync(false, ['photo']) // Android 13+: photos only
+            const { status } = await MediaLibrary.requestPermissionsAsync(false, ['photo'])
             return status === 'granted'
         } catch {
-            const { status } = await MediaLibrary.requestPermissionsAsync() // iOS / older Android
+            const { status } = await MediaLibrary.requestPermissionsAsync()
             return status === 'granted'
         }
     }
@@ -118,15 +135,9 @@ export default function Results() {
     async function onSave() {
         try {
             setBusy(true)
-            if (Platform.OS === 'web') {
-                Alert.alert('Not supported on web', 'Saving to Photos is only available on iOS/Android.')
-                return
-            }
+            if (Platform.OS === 'web') { Alert.alert('Not supported on web'); return }
             if (isExpoGo && Platform.OS === 'android') {
-                Alert.alert(
-                    'Use a development build',
-                    'Due to Android’s new media permissions, saving to Photos can’t be fully tested in Expo Go. Build a dev client to continue.'
-                )
+                Alert.alert('Use a development build', 'Saving to Photos can’t be fully tested in Expo Go on Android.')
                 return
             }
 
@@ -154,10 +165,7 @@ export default function Results() {
         try {
             setBusy(true)
             const available = await Sharing.isAvailableAsync()
-            if (!available) {
-                Alert.alert('Sharing not available', 'This device does not support the native share dialog.')
-                return
-            }
+            if (!available) { Alert.alert('Sharing not available'); return }
             const fileUri = cachedUri || await ensureLocalFileFromImg(String(imageUri))
             if (!cachedUri) setCachedUri(fileUri)
             await Sharing.shareAsync(fileUri)

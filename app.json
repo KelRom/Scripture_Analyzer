@@ -14,7 +14,11 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "y",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -38,7 +42,14 @@
           "photosPermission": "Allow $(PRODUCT_NAME) to access your photos.",
           "savePhotosPermission": "Allow $(PRODUCT_NAME) to save photos."
         }
-      ]
-    ]
+      ],
+      "expo-dev-client"
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "ff2a6047-3c64-4ab7-8fa3-0f0d2bc09cbf"
+      }
+    }
   }
 }
