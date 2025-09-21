@@ -1,102 +1,150 @@
 // app/results.jsx
-import { View, Text, Image, TouchableOpacity, StyleSheet, Alert } from 'react-native'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { View, Text, Image, TouchableOpacity, StyleSheet, Alert, Platform } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
-import { Colors } from "../constants/colors"
-import * as FileSystem from 'expo-file-system'
+import { Colors } from '../constants/colors'
+
+// ✅ SDK 54 new FileSystem API
+import { File, Directory, Paths } from 'expo-file-system'
 import * as MediaLibrary from 'expo-media-library'
 import * as Sharing from 'expo-sharing'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import Constants from 'expo-constants'
 
-const HISTORY_KEY = "sa_history"
+const HISTORY_KEY = 'sa_history'
+const ALBUM_NAME = 'Scripture Analyzer'
+const isExpoGo = Constants.appOwnership === 'expo'
 
 export default function Results() {
     const router = useRouter()
-    const { img = "", ref = "", prompt = "" } = useLocalSearchParams()
+    const { img = '', ref = '', prompt = '' } = useLocalSearchParams()
 
-    // Decode long/URL-encoded params safely
     const imageUri = useMemo(() => {
         try { return decodeURIComponent(String(img)) } catch { return String(img) }
     }, [img])
 
     const [busy, setBusy] = useState(false)
-    const [cachedUri, setCachedUri] = useState("")      // local file we can reuse for Save/Share
-    const addedOnceRef = useRef(false)                  // guard to prevent duplicate history writes
+    const [cachedUri, setCachedUri] = useState('')
+    const addedOnceRef = useRef(false)
 
     function onRegenerate() {
-        router.replace({ pathname: "/loadingScreen", params: { prompt: String(prompt || ""), ref: String(ref || "") } })
+        router.replace({
+            pathname: '/loadingScreen',
+            params: { prompt: String(prompt || ''), ref: String(ref || '') }
+        })
     }
 
+    // ---------- FS helpers (SDK 54) ----------
+    const outDir = new Directory(Paths.cache, 'scripture-analyzer')
+    async function ensureOutDir() {
+        try {
+            await outDir.create() // may throw if exists
+        } catch (e) {
+            // ignore "it already exists"
+            if (!String(e?.message || '').toLowerCase().includes('already exists')) {
+                throw e
+            }
+        }
+    }
 
-    // Ensure we have a local file path for any image (data: / http(s) / file:)
     async function ensureLocalFileFromImg(uriStr) {
-        const dir = FileSystem.cacheDirectory + "scripture-analyzer/"
-        try { await FileSystem.makeDirectoryAsync(dir, { intermediates: true }) } catch { }
-        // data URI -> write to file
-        if (uriStr.startsWith("data:")) {
-            const mimeMatch = uriStr.match(/^data:(.*?);base64,/)
-            const mime = mimeMatch?.[1] || "image/png"
-            const ext = mime.includes("png") ? "png" : (mime.includes("jpeg") || mime.includes("jpg")) ? "jpg" : "png"
-            const base64 = uriStr.split(",")[1]
-            const fileUri = `${dir}verse-${Date.now()}.${ext}`
-            await FileSystem.writeAsStringAsync(fileUri, base64, { encoding: FileSystem.EncodingType.Base64 })
-            return fileUri
+        await ensureOutDir()
+
+        // data: URI → base64 write
+        if (uriStr.startsWith('data:')) {
+            const [, mime = 'image/png'] = uriStr.match(/^data:(.*?);base64,/) || []
+            const ext = mime.includes('png') ? 'png' : (mime.includes('jpeg') || mime.includes('jpg')) ? 'jpg' : 'png'
+            const base64 = uriStr.split(',')[1] || ''
+            const outFile = outDir.createFile(`verse-${Date.now()}.${ext}`, mime)
+            await outFile.write(base64, { encoding: 'base64' })
+            return outFile.uri
         }
-        // remote URL -> download
-        if (uriStr.startsWith("http://") || uriStr.startsWith("https://")) {
-            const target = `${dir}verse-${Date.now()}.png`
-            const dl = await FileSystem.downloadAsync(uriStr, target)
-            return dl.uri
+
+        // http(s) → download and write bytes
+        if (/^https?:\/\//i.test(uriStr)) {
+            const res = await fetch(uriStr)
+            if (!res.ok) throw new Error(`Download failed: ${res.status}`)
+            const buf = await res.arrayBuffer()
+            const bytes = new Uint8Array(buf)
+            const outFile = outDir.createFile(`verse-${Date.now()}.png`, 'image/png')
+            await outFile.write(bytes)
+            return outFile.uri
         }
-        // already a local file path
+
+        // already local
         return uriStr
     }
 
+    // ---------- Auto-add NEW images (data: URIs) to History once ----------
     useEffect(() => {
         let cancelled = false
         async function addToHistoryOnce() {
             if (addedOnceRef.current) return
-
-            // Only auto-add if this looks like a newly generated data URI
-            if (!String(imageUri).startsWith("data:")) return
+            if (!String(imageUri).startsWith('data:')) return
             addedOnceRef.current = true
             try {
                 const fileUri = await ensureLocalFileFromImg(String(imageUri))
                 if (cancelled) return
                 setCachedUri(fileUri)
-                const rec = { uri: fileUri, ref: String(ref || ""), prompt: String(prompt || ""), ts: Date.now() }
-                const hRaw = await AsyncStorage.getItem(HISTORY_KEY)
-                const arr = Array.isArray(JSON.parse(hRaw || "[]")) ? JSON.parse(hRaw || "[]") : []
+
+                const rec = { uri: fileUri, ref: String(ref || ''), prompt: String(prompt || ''), ts: Date.now() }
+                const raw = await AsyncStorage.getItem(HISTORY_KEY)
+                const arr = Array.isArray(JSON.parse(raw || '[]')) ? JSON.parse(raw || '[]') : []
                 const next = [rec, ...arr].slice(0, 10)
                 await AsyncStorage.setItem(HISTORY_KEY, JSON.stringify(next))
             } catch (e) {
-                console.warn("Auto-history add failed:", e?.message || e)
+                console.warn('Auto-history add failed:', e?.message || e)
             }
         }
         addToHistoryOnce()
         return () => { cancelled = true }
     }, [imageUri, ref, prompt])
 
+    // ---------- MediaLibrary ----------
+    async function requestPhotoPermissionOnly() {
+        // Expo Go on Android: plugin isn’t applied → granular request can cause AUDIO error.
+        if (isExpoGo && Platform.OS === 'android') {
+            return false // force the “use dev build” message below
+        }
+        try {
+            const { status } = await MediaLibrary.requestPermissionsAsync(false, ['photo']) // Android 13+: photos only
+            return status === 'granted'
+        } catch {
+            const { status } = await MediaLibrary.requestPermissionsAsync() // iOS / older Android
+            return status === 'granted'
+        }
+    }
+
     async function onSave() {
         try {
             setBusy(true)
-            const { status } = await MediaLibrary.requestPermissionsAsync()
-            if (status !== "granted") throw new Error("Please allow Photo Library access to save images.")
+            if (Platform.OS === 'web') {
+                Alert.alert('Not supported on web', 'Saving to Photos is only available on iOS/Android.')
+                return
+            }
+            if (isExpoGo && Platform.OS === 'android') {
+                Alert.alert(
+                    'Use a development build',
+                    'Due to Android’s new media permissions, saving to Photos can’t be fully tested in Expo Go. Build a dev client to continue.'
+                )
+                return
+            }
 
-            // Reuse cached file if available; otherwise ensure one
+            const granted = await requestPhotoPermissionOnly()
+            if (!granted) throw new Error('Please allow photo access to save images.')
+
             const fileUri = cachedUri || await ensureLocalFileFromImg(String(imageUri))
             if (!cachedUri) setCachedUri(fileUri)
 
             const asset = await MediaLibrary.createAssetAsync(fileUri)
-            const albumName = "Scripture Analyzer"
-            let album = await MediaLibrary.getAlbumAsync(albumName)
-            if (!album) await MediaLibrary.createAlbumAsync(albumName, asset, false)
+            let album = await MediaLibrary.getAlbumAsync(ALBUM_NAME)
+            if (!album) await MediaLibrary.createAlbumAsync(ALBUM_NAME, asset, false)
             else await MediaLibrary.addAssetsToAlbumAsync([asset], album, false)
 
-            Alert.alert("Saved ✅", "Image saved to your Photos.")
+            Alert.alert('Saved ✅', 'Image saved to your Photos.')
         } catch (e) {
             console.error(e)
-            Alert.alert("Save failed", e?.message || "Could not save the image.")
+            Alert.alert('Save failed', e?.message || 'Could not save the image.')
         } finally {
             setBusy(false)
         }
@@ -106,13 +154,16 @@ export default function Results() {
         try {
             setBusy(true)
             const available = await Sharing.isAvailableAsync()
-            if (!available) return Alert.alert("Sharing not available", "This device doesn’t support the native share dialog.")
+            if (!available) {
+                Alert.alert('Sharing not available', 'This device does not support the native share dialog.')
+                return
+            }
             const fileUri = cachedUri || await ensureLocalFileFromImg(String(imageUri))
             if (!cachedUri) setCachedUri(fileUri)
             await Sharing.shareAsync(fileUri)
         } catch (e) {
             console.error(e)
-            Alert.alert("Share failed", e?.message || "Could not open the share dialog.")
+            Alert.alert('Share failed', e?.message || 'Could not open the share dialog.')
         } finally {
             setBusy(false)
         }
@@ -124,7 +175,7 @@ export default function Results() {
 
             <View style={styles.center}>
                 <Image source={{ uri: imageUri }} style={styles.image} />
-                <Text style={styles.verse}>“{String(ref)}”</Text>
+                {!!ref && <Text style={styles.verse}>“{String(ref)}”</Text>}
             </View>
 
             <View style={styles.row}>
@@ -152,10 +203,10 @@ const styles = StyleSheet.create({
         borderWidth: 1, borderColor: (Colors.border && Colors.border.color) || '#3B424C'
     },
     verse: { marginTop: 10, textAlign: 'center', color: Colors.secondaryColorText.color },
-    row: { flexDirection: 'row', justifyContent: "space-evenly", width: '100%' },
+    row: { flexDirection: 'row', justifyContent: 'space-evenly', width: '100%' },
     button: {
-        marginBottom: 100, width: 100, height: 50, borderRadius: 50,
-        justifyContent: "center", alignItems: "center",
+        marginBottom: 100, width: 110, height: 50, borderRadius: 50,
+        justifyContent: 'center', alignItems: 'center',
         backgroundColor: Colors.primaryColorBackground.backgroundColor
     },
     buttonDisabled: { opacity: 0.6 },
