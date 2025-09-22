@@ -14,32 +14,28 @@ const HISTORY_KEY = 'sa_history'
 const ALBUM_NAME = 'Scripture Analyzer'
 const isExpoGo = Constants.appOwnership === 'expo'
 
-// ---- tiny base64 decoder -> Uint8Array (no atob/Buffer needed) ----
+// --- base64 → Uint8Array (no Buffer/atob)
 const _b64chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
 function base64ToBytes(b64) {
-    // strip data URL prefix if present
     const clean = b64.replace(/^data:.*?;base64,/, '').replace(/[\r\n\s]/g, '')
-    let bufferLength = clean.length * 0.75
-    if (clean.endsWith('==')) bufferLength -= 2
-    else if (clean.endsWith('=')) bufferLength -= 1
-    const bytes = new Uint8Array(bufferLength)
-
+    let len = clean.length * 0.75
+    if (clean.endsWith('==')) len -= 2
+    else if (clean.endsWith('=')) len -= 1
+    const out = new Uint8Array(len)
     let p = 0
     for (let i = 0; i < clean.length; i += 4) {
-        const enc1 = _b64chars.indexOf(clean[i])
-        const enc2 = _b64chars.indexOf(clean[i + 1])
-        const enc3 = _b64chars.indexOf(clean[i + 2])
-        const enc4 = _b64chars.indexOf(clean[i + 3])
-
-        const chr1 = (enc1 << 2) | (enc2 >> 4)
-        const chr2 = ((enc2 & 15) << 4) | (enc3 >> 2)
-        const chr3 = ((enc3 & 3) << 6) | enc4
-
-        bytes[p++] = chr1
-        if (enc3 !== 64 && clean[i + 2] !== '=') bytes[p++] = chr2
-        if (enc4 !== 64 && clean[i + 3] !== '=') bytes[p++] = chr3
+        const e1 = _b64chars.indexOf(clean[i])
+        const e2 = _b64chars.indexOf(clean[i + 1])
+        const e3 = _b64chars.indexOf(clean[i + 2])
+        const e4 = _b64chars.indexOf(clean[i + 3])
+        const c1 = (e1 << 2) | (e2 >> 4)
+        const c2 = ((e2 & 15) << 4) | (e3 >> 2)
+        const c3 = ((e3 & 3) << 6) | e4
+        out[p++] = c1
+        if (clean[i + 2] !== '=' && e3 !== 64) out[p++] = c2
+        if (clean[i + 3] !== '=' && e4 !== 64) out[p++] = c3
     }
-    return bytes
+    return out
 }
 
 export default function Results() {
@@ -52,23 +48,27 @@ export default function Results() {
 
     const [busy, setBusy] = useState(false)
     const [cachedUri, setCachedUri] = useState('')
-    const addedOnceRef = useRef(false)
+    const cachedForRef = useRef('')        // which imageUri the cache belongs to
+    const addedOnceRef = useRef(false)     // history guard per image
 
     function onRegenerate() {
-        router.replace({ pathname: '/loadingScreen', params: { prompt: String(prompt || ''), ref: String(ref || '') } })
+        router.replace({
+            pathname: '/loadingScreen',
+            params: { prompt: String(prompt || ''), ref: String(ref || '') }
+        })
     }
 
-    // ---------- File helpers (SDK 54) ----------
+    // ---------- File helpers ----------
     const outDir = new Directory(Paths.cache, 'scripture-analyzer')
+    function uniqueName(ext) {
+        return `verse-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
+    }
     async function ensureOutDir() {
-        try {
-            await outDir.create()
-        } catch (e) {
+        try { await outDir.create() } catch (e) {
             const msg = String(e?.message || '').toLowerCase()
             if (!msg.includes('already exists')) throw e
         }
     }
-
     async function ensureLocalFileFromImg(uriStr) {
         await ensureOutDir()
 
@@ -76,9 +76,9 @@ export default function Results() {
             const [, mime = 'image/png'] = uriStr.match(/^data:(.*?);base64,/) || []
             const ext = mime.includes('png') ? 'png' : (mime.includes('jpeg') || mime.includes('jpg')) ? 'jpg' : 'png'
             const base64 = uriStr.split(',')[1] || ''
-            const bytes = base64ToBytes(base64) // <-- write bytes, not (data, {encoding})
-            const outFile = outDir.createFile(`verse-${Date.now()}.${ext}`, mime)
-            await outFile.write(bytes) // ✅ single-arg write
+            const bytes = base64ToBytes(base64)
+            const outFile = outDir.createFile(uniqueName(ext), mime)
+            await outFile.write(bytes)
             return outFile.uri
         }
 
@@ -87,15 +87,22 @@ export default function Results() {
             if (!res.ok) throw new Error(`Download failed: ${res.status}`)
             const buf = await res.arrayBuffer()
             const bytes = new Uint8Array(buf)
-            const outFile = outDir.createFile(`verse-${Date.now()}.png`, 'image/png')
+            const outFile = outDir.createFile(uniqueName('png'), 'image/png')
             await outFile.write(bytes)
             return outFile.uri
         }
 
-        return uriStr
+        return uriStr // already local
     }
 
-    // ---------- Auto-add NEW images (data: URIs) to History once ----------
+    // ---------- Reset cache when the displayed image changes ----------
+    useEffect(() => {
+        setCachedUri('')
+        cachedForRef.current = ''
+        addedOnceRef.current = false
+    }, [imageUri])
+
+    // ---------- Auto-add NEW (data:) images to History ----------
     useEffect(() => {
         let cancelled = false
         async function addToHistoryOnce() {
@@ -106,6 +113,7 @@ export default function Results() {
                 const fileUri = await ensureLocalFileFromImg(String(imageUri))
                 if (cancelled) return
                 setCachedUri(fileUri)
+                cachedForRef.current = imageUri
 
                 const rec = { uri: fileUri, ref: String(ref || ''), prompt: String(prompt || ''), ts: Date.now() }
                 const raw = await AsyncStorage.getItem(HISTORY_KEY)
@@ -120,9 +128,9 @@ export default function Results() {
         return () => { cancelled = true }
     }, [imageUri, ref, prompt])
 
-    // ---------- MediaLibrary (photo-only) ----------
+    // ---------- MediaLibrary ----------
     async function requestPhotoPermissionOnly() {
-        if (isExpoGo && Platform.OS === 'android') return false // Expo Go can’t apply plugin permissions
+        if (isExpoGo && Platform.OS === 'android') return false // Expo Go can't apply plugin perms
         try {
             const { status } = await MediaLibrary.requestPermissionsAsync(false, ['photo'])
             return status === 'granted'
@@ -130,6 +138,15 @@ export default function Results() {
             const { status } = await MediaLibrary.requestPermissionsAsync()
             return status === 'granted'
         }
+    }
+
+    // Always use the file for the CURRENT imageUri
+    async function getCurrentFileUri() {
+        if (cachedUri && cachedForRef.current === imageUri) return cachedUri
+        const uri = await ensureLocalFileFromImg(String(imageUri))
+        setCachedUri(uri)
+        cachedForRef.current = imageUri
+        return uri
     }
 
     async function onSave() {
@@ -144,9 +161,7 @@ export default function Results() {
             const granted = await requestPhotoPermissionOnly()
             if (!granted) throw new Error('Please allow photo access to save images.')
 
-            const fileUri = cachedUri || await ensureLocalFileFromImg(String(imageUri))
-            if (!cachedUri) setCachedUri(fileUri)
-
+            const fileUri = await getCurrentFileUri()
             const asset = await MediaLibrary.createAssetAsync(fileUri)
             let album = await MediaLibrary.getAlbumAsync(ALBUM_NAME)
             if (!album) await MediaLibrary.createAlbumAsync(ALBUM_NAME, asset, false)
@@ -166,8 +181,7 @@ export default function Results() {
             setBusy(true)
             const available = await Sharing.isAvailableAsync()
             if (!available) { Alert.alert('Sharing not available'); return }
-            const fileUri = cachedUri || await ensureLocalFileFromImg(String(imageUri))
-            if (!cachedUri) setCachedUri(fileUri)
+            const fileUri = await getCurrentFileUri()
             await Sharing.shareAsync(fileUri)
         } catch (e) {
             console.error(e)
@@ -203,7 +217,7 @@ export default function Results() {
 
 const styles = StyleSheet.create({
     screen: { flex: 1, justifyContent: 'space-evenly', alignItems: 'center' },
-    title: { fontSize: 50, color: Colors.primaryColorText.color },
+    title: { fontSize: 50, color: Colors.primaryColorText.color, marginTop: 6 },
     center: { alignItems: 'center' },
     image: {
         width: 320, height: 320, borderRadius: 30,
