@@ -28,7 +28,7 @@ export default function RootLayout() {
                     headerTintColor: Colors.primaryColorText.color,
                     headerLeftContainerStyle: { paddingLeft: 8 },
 
-                    // ↓ tiny nudge down
+                    // tiny nudge down
                     headerLeft: () => (
                         <Pressable
                             onPress={() => navigation.openDrawer()}

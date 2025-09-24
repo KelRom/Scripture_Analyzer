@@ -1,6 +1,6 @@
 // app/history.jsx
 import { useCallback, useMemo, useState } from 'react'
-import { View, Text, StyleSheet, FlatList, Image, Pressable, Alert, Dimensions } from 'react-native'
+import { View, Text, StyleSheet, FlatList, Image, Pressable, Alert, Dimensions, TouchableOpacity } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { Colors } from '../constants/colors'
 import { useRouter } from 'expo-router'
@@ -97,9 +97,9 @@ export default function HistoryScreen() {
                 ListEmptyComponent={
                     <View style={styles.empty}>
                         <Text style={styles.muted}>No history yet</Text>
-                        <Pressable onPress={() => router.navigate('/')} style={styles.emptyBtn}>
+                        <TouchableOpacity onPress={() => router.navigate('/')} style={styles.emptyBtn}>
                             <Text style={styles.emptyBtnText}>Create your first image</Text>
-                        </Pressable>
+                        </TouchableOpacity>
                     </View>
                 }
             />
@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
     badgeTxt: { color: '#fff', fontSize: 11 },
 
     empty: { alignItems: 'center', marginTop: 24 },
-    muted: { textAlign: 'center', color: Colors.secondaryColorText.color, opacity: 0.7, marginBottom: 12 },
+    muted: { textAlign: 'center', color: Colors.primaryColorText.color, opacity: 0.7, marginBottom: 12 },
     emptyBtn: {
         paddingHorizontal: 16,
         paddingVertical: 10,

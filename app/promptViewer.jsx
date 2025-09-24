@@ -114,7 +114,7 @@ const styles = StyleSheet.create({
     segmentWrap: { flexDirection: 'row', gap: 8 },
     segment: { paddingVertical: 6, paddingHorizontal: 12, borderRadius: 999, borderWidth: 1, borderColor: '#666' },
     segmentOn: { backgroundColor: `${Colors.primaryColorText.color}22`, borderColor: Colors.primaryColorText.color },
-    segmentText: { color: Colors.secondaryColorText.color },
+    segmentText: { color: Colors.primaryColorText.color },
     segmentTextOn: { color: Colors.primaryColorText.color },
 
     button: {
