@@ -102,9 +102,9 @@ const styles = StyleSheet.create({
     promptText: { fontSize: 14, color: '#000', lineHeight: 20 },
     stylePill: {
         alignSelf: 'flex-start', marginTop: 10, paddingVertical: 6, paddingHorizontal: 12,
-        borderRadius: 999, borderWidth: 1, borderColor: Colors.primaryColorText.color, backgroundColor: 'transparent'
+        borderRadius: 999, borderWidth: 1, borderColor: Colors.secondaryColorText.color, backgroundColor: 'transparent'
     },
-    stylePillText: { color: Colors.primaryColorText.color, fontSize: 12 },
+    stylePillText: { color: Colors.secondaryColorText.color, fontSize: 12 },
 
     optionsRow: { width: '85%', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     toggleLabel: { fontSize: 16, color: Colors.primaryColorText.color },

@@ -224,7 +224,7 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.primaryColorBackground.backgroundColor,
         borderWidth: 1, borderColor: (Colors.border && Colors.border.color) || '#3B424C'
     },
-    verse: { marginTop: 10, textAlign: 'center', color: Colors.secondaryColorText.color },
+    verse: { marginTop: 10, textAlign: 'center', color: Colors.primaryColorText.color },
     row: { flexDirection: 'row', justifyContent: 'space-evenly', width: '100%' },
     button: {
         marginBottom: 100, width: 110, height: 50, borderRadius: 50,
