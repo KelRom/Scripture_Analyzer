@@ -1,22 +1,22 @@
 export const Colors = {
     container: {
-        backgroundColor: "#353839",
+        backgroundColor: "#B2EBF2",
         flex: 1
     },
 
     primaryColorBackground: {
-        backgroundColor: "#EFBF04"
+        backgroundColor: "#FAAB15"
     },
 
     primaryColorText: {
-        color: "#EFBF04"
+        color: "#FAAB15"
     },
 
     secondaryColorBackground: {
-        backgroudColor: "#0434EF"
+        backgroudColor: "#014D4E"
     },
 
     secondaryColorText: {
-        color: "#0434EF"
+        color: "#014D4E"
     }
 }

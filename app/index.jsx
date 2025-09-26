@@ -46,7 +46,7 @@ export default function Home() {
                 onChangeText={setUserInput}
                 style={styles.inputFormat}
                 placeholder="John 3:16"
-                placeholderTextColor="#0434EF"
+                placeholderTextColor="#249EA0"
             />
 
             <View style={styles.centerBlock}>
@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.primaryColorBackground.backgroundColor, color: Colors.secondaryColorText.color
     },
     centerBlock: { width: '100%', alignItems: 'center' },
-    stylesHeader: { marginTop: 6, marginBottom: 8, textAlign: 'center', fontSize: 20, color: Colors.primaryColorText.color },
+    stylesHeader: { marginTop: 6, marginBottom: 8, textAlign: 'center', fontSize: 20, color: Colors.secondaryColorText.color },
     stylesRow: { paddingRight: 16, paddingLeft: 24, alignItems: 'center' },
 
     styleCard: {
