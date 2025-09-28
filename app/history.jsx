@@ -1,6 +1,5 @@
-// app/history.jsx
 import { useCallback, useMemo, useState } from 'react'
-import { View, Text, StyleSheet, FlatList, Image, Pressable, Alert, Dimensions, TouchableOpacity } from 'react-native'
+import { View, Text, StyleSheet, FlatList, Image, Pressable, Alert, Dimensions } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { Colors } from '../constants/colors'
 import { useRouter } from 'expo-router'
@@ -9,7 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { useHeaderHeight } from '@react-navigation/elements'
 
 const HISTORY_KEY = 'sa_history'
-const TOP_OFFSET = -6 // pull up to match Preview title
+const TOP_OFFSET = -6
 
 export default function HistoryScreen() {
     const [items, setItems] = useState([])
@@ -18,7 +17,7 @@ export default function HistoryScreen() {
 
     const tileSize = useMemo(() => {
         const w = Dimensions.get('window').width
-        return Math.min(309, Math.round(w - 32)) // match Preview box width
+        return Math.min(320, Math.round(w - 32))
     }, [])
 
     const load = useCallback(async () => {
@@ -32,14 +31,24 @@ export default function HistoryScreen() {
     useFocusEffect(useCallback(() => { load() }, [load]))
 
     function openItem(item) {
-        router.navigate({ pathname: '/results', params: { img: item.uri, ref: item.ref || '', prompt: item.prompt || '' } })
+        router.navigate({
+            pathname: '/results',
+            params: {
+                img: item.uri,
+                ref: item.ref || '',
+                prompt: item.prompt || '',
+                skipHistory: '1',
+                source: 'history'
+            }
+        })
     }
 
     async function deleteItem(ts) {
         Alert.alert('Delete this?', 'This removes the image from History (not from your Photos).', [
             { text: 'Cancel', style: 'cancel' },
             {
-                text: 'Delete', style: 'destructive', onPress: async () => {
+                text: 'Delete', style: 'destructive',
+                onPress: async () => {
                     const hRaw = await AsyncStorage.getItem(HISTORY_KEY)
                     const arr = Array.isArray(JSON.parse(hRaw || '[]')) ? JSON.parse(hRaw || '[]') : []
                     const next = arr.filter(x => x.ts !== ts).slice(0, 10)
@@ -74,10 +83,7 @@ export default function HistoryScreen() {
     )
 
     return (
-        <SafeAreaView
-            style={[styles.screen, { paddingTop: Math.max(0, headerHeight + TOP_OFFSET) }]}
-            edges={['bottom']} // avoid double top inset
-        >
+        <SafeAreaView style={[styles.screen, { paddingTop: Math.max(0, headerHeight + TOP_OFFSET) }]} edges={['bottom']}>
             <View style={styles.headerRow}>
                 <Text style={styles.title}>History</Text>
                 {items.length > 0 && (
@@ -96,10 +102,10 @@ export default function HistoryScreen() {
                 numColumns={1}
                 ListEmptyComponent={
                     <View style={styles.empty}>
-                        <Text style={styles.muted}>No history yet</Text>
-                        <TouchableOpacity onPress={() => router.navigate('/')} style={styles.emptyBtn}>
+                        <Text style={styles.muted}>No images yet — let’s make something beautiful.</Text>
+                        <Pressable onPress={() => router.navigate('/')} style={styles.emptyBtn}>
                             <Text style={styles.emptyBtnText}>Create your first image</Text>
-                        </TouchableOpacity>
+                        </Pressable>
                     </View>
                 }
             />
@@ -109,6 +115,7 @@ export default function HistoryScreen() {
 
 const styles = StyleSheet.create({
     screen: { flex: 1 },
+
     headerRow: {
         width: '100%',
         alignItems: 'center',
@@ -116,58 +123,34 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         marginBottom: 4
     },
-    title: {
-        textAlign: 'center',
-        fontSize: 50,
-        color: Colors.primaryColorText.color,
-        marginTop: 0
-    },
+    title: { textAlign: 'center', fontSize: 50, color: Colors.primaryColorText.color, marginTop: 0 },
     clearBtn: {
-        position: 'absolute',
-        right: 16,
-        top: 0,
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 999,
+        position: 'absolute', right: 16, top: 0,
+        paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999,
         backgroundColor: `${Colors.primaryColorText.color}22`
     },
-    clearTxt: { color: Colors.primaryColorText.color },
+    clearTxt: { color: Colors.secondaryColorText.color },
 
-    list: {
-        alignItems: 'center',
-        paddingHorizontal: 8,
-        paddingBottom: 16,
-        gap: 12
-    },
+    list: { alignItems: 'center', paddingHorizontal: 8, paddingBottom: 16, gap: 12 },
 
     card: {
-        borderRadius: 30,
-        overflow: 'hidden',
-        borderWidth: 1,
-        borderColor: (Colors.border && Colors.border.color) || '#3B424C',
+        borderRadius: 30, overflow: 'hidden', borderWidth: 1,
+        borderColor: (Colors.border?.color ?? '#5A6472'),
         backgroundColor: Colors.primaryColorBackground.backgroundColor,
     },
     img: { width: '100%', height: '100%' },
 
     badge: {
-        position: 'absolute',
-        bottom: 8,
-        right: 8,
-        backgroundColor: '#0007',
-        paddingHorizontal: 8,
-        paddingVertical: 4,
-        borderRadius: 10
+        position: 'absolute', bottom: 8, right: 8,
+        backgroundColor: '#0007', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 10
     },
     badgeTxt: { color: '#fff', fontSize: 11 },
 
     empty: { alignItems: 'center', marginTop: 24 },
-    muted: { textAlign: 'center', color: Colors.primaryColorText.color, opacity: 0.7, marginBottom: 12 },
+    muted: { textAlign: 'center', color: Colors.secondaryColorText.color, opacity: 0.8, marginBottom: 12 },
     emptyBtn: {
-        paddingHorizontal: 16,
-        paddingVertical: 10,
-        borderRadius: 999,
-        borderWidth: 1,
-        borderColor: Colors.primaryColorText.color
+        paddingHorizontal: 16, paddingVertical: 10, borderRadius: 999,
+        borderWidth: 1, borderColor: Colors.primaryColorText.color
     },
-    emptyBtnText: { color: Colors.primaryColorText.color }
+    emptyBtnText: { color: Colors.secondaryColorText.color }
 })
