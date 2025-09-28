@@ -5,7 +5,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useFocusEffect } from '@react-navigation/native'
 import { Colors } from '../constants/colors'
 
-const API_URL = '/api/generate-image'
+const API_URL = 'https://scripture-analyzer.vercel.app/api/generate-image'
 const RANDOM_VERSE_URL = 'https://beta.ourmanna.com/api/v1/get/?format=json&order=random'
 
 export default function LoadingScreen() {
